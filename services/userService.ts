@@ -60,7 +60,19 @@ export const saveUserProfile = async (
 ): Promise<void> => {
   try {
     const userRef = doc(db, USERS_COLLECTION, userId);
-    const userSnap = await getDoc(userRef);
+
+    // Try to get existing user, but don't wait too long
+    let userSnap;
+    try {
+      userSnap = await getDoc(userRef);
+    } catch (readError) {
+      console.warn(
+        "Error reading user document, will try to create:",
+        readError
+      );
+      // If read fails, try to create new document
+      userSnap = { exists: () => false } as any;
+    }
 
     const dataToSave = {
       ...profileData,
@@ -77,8 +89,14 @@ export const saveUserProfile = async (
         createdAt: new Date(),
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error saving user profile:", error);
+    // If it's an offline error, log it but don't necessarily throw
+    if (error?.code === "unavailable" || error?.message?.includes("offline")) {
+      console.warn(
+        "Firestore is offline. Profile will be saved when connection is restored."
+      );
+    }
     throw error;
   }
 };

@@ -1,6 +1,12 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import {
+  getFirestore,
+  enableNetwork,
+  disableNetwork,
+} from "firebase/firestore";
+// @ts-ignore - getReactNativePersistence exists in runtime but types may not be updated
+import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 
 // Get Firebase config from environment variables
@@ -48,6 +54,17 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
 export const db = getFirestore(app);
-export const auth = getAuth(app);
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+});
+
+// Enable Firestore network (in case it was disabled)
+try {
+  enableNetwork(db).catch((error) => {
+    console.warn("Could not enable Firestore network:", error);
+  });
+} catch (error) {
+  console.warn("Firestore network initialization error:", error);
+}
 
 export default app;

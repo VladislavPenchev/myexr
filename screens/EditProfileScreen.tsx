@@ -41,7 +41,8 @@ export default function EditProfileScreen() {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        const currentUserId = await getCurrentUserId();
+        const currentUserId = getCurrentUserId();
+        if (!currentUserId) return;
         setUserId(currentUserId);
 
         const profile = await getUserProfile(currentUserId);

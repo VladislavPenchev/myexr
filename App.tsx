@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { User } from "firebase/auth";
 
 import MyPlanScreen from "./screens/MyPlanScreen";
 import ProgramsScreen from "./screens/ProgramsScreen";
@@ -14,8 +16,10 @@ import ToolboxScreen from "./screens/ToolboxScreen";
 import YouScreen from "./screens/YouScreen";
 import EditProfileScreen from "./screens/EditProfileScreen";
 import JournalScreen from "./screens/JournalScreen";
+import AuthScreen from "./screens/AuthScreen";
 import { TouchableOpacity, Text } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { onAuthStateChange } from "./services/authService";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -107,6 +111,37 @@ function YouStack() {
 }
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  if (loading) {
+    return (
+      <SafeAreaProvider>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <AuthScreen />
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
@@ -188,3 +223,12 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+  },
+});

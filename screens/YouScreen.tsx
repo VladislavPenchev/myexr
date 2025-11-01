@@ -13,7 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BadgesSection, { Badge } from "../components/profile/BadgesSection";
 import AllBadgesModal from "../components/profile/AllBadgesModal";
 import { getUserProfile } from "../services/userService";
-import { getCurrentUserId } from "../services/authService";
+import { getCurrentUserId, signOutUser } from "../services/authService";
+import { Alert } from "react-native";
 
 export default function YouScreen() {
   const navigation = useNavigation();
@@ -60,7 +61,8 @@ export default function YouScreen() {
     const loadUserData = async () => {
       try {
         setLoading(true);
-        const userId = await getCurrentUserId();
+        const userId = getCurrentUserId();
+        if (!userId) return;
         const profile = await getUserProfile(userId);
 
         if (profile) {
@@ -139,7 +141,8 @@ export default function YouScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", async () => {
       try {
-        const userId = await getCurrentUserId();
+        const userId = getCurrentUserId();
+        if (!userId) return;
         const profile = await getUserProfile(userId);
         if (profile && profile.name) {
           setUserName(profile.name);
@@ -151,6 +154,27 @@ export default function YouScreen() {
 
     return unsubscribe;
   }, [navigation]);
+
+  const handleLogout = () => {
+    Alert.alert("Изход", "Сигурни ли сте, че искате да излезете?", [
+      {
+        text: "Отказ",
+        style: "cancel",
+      },
+      {
+        text: "Изход",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOutUser();
+          } catch (error) {
+            console.error("Error signing out:", error);
+            Alert.alert("Грешка", "Възникна грешка при излизане");
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <ScrollView
@@ -169,8 +193,8 @@ export default function YouScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.greeting}>Hi {userName}</Text>
-            <TouchableOpacity>
-              <Ionicons name="settings-outline" size={24} color="#fff" />
+            <TouchableOpacity onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
 

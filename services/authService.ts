@@ -1,47 +1,84 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const USER_ID_KEY = "@myexr:userId";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from "firebase/auth";
+import { auth } from "../config/firebase";
 
 /**
- * Get or create current user ID
- * In a real app, this would handle authentication
+ * Register a new user with email and password
  */
-export const getCurrentUserId = async (): Promise<string> => {
+export const signUp = async (
+  email: string,
+  password: string
+): Promise<User> => {
   try {
-    let userId = await AsyncStorage.getItem(USER_ID_KEY);
-
-    if (!userId) {
-      // Create a new user ID (in real app, this would be after authentication)
-      userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      await AsyncStorage.setItem(USER_ID_KEY, userId);
-    }
-
-    return userId;
-  } catch (error) {
-    console.error("Error getting user ID:", error);
-    // Return a temporary ID if storage fails
-    return `temp_${Date.now()}`;
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    return userCredential.user;
+  } catch (error: any) {
+    console.error("Error signing up:", error);
+    throw new Error(error.message || "Failed to create account");
   }
 };
 
 /**
- * Set current user ID (useful after authentication)
+ * Sign in with email and password
  */
-export const setCurrentUserId = async (userId: string): Promise<void> => {
+export const signIn = async (
+  email: string,
+  password: string
+): Promise<User> => {
   try {
-    await AsyncStorage.setItem(USER_ID_KEY, userId);
-  } catch (error) {
-    console.error("Error setting user ID:", error);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    return userCredential.user;
+  } catch (error: any) {
+    console.error("Error signing in:", error);
+    throw new Error(error.message || "Failed to sign in");
   }
 };
 
 /**
- * Clear user ID (useful for logout)
+ * Sign out current user
  */
-export const clearCurrentUserId = async (): Promise<void> => {
+export const signOutUser = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(USER_ID_KEY);
+    await signOut(auth);
   } catch (error) {
-    console.error("Error clearing user ID:", error);
+    console.error("Error signing out:", error);
+    throw error;
   }
+};
+
+/**
+ * Get current authenticated user
+ */
+export const getCurrentUser = (): User | null => {
+  return auth.currentUser;
+};
+
+/**
+ * Get current user ID
+ */
+export const getCurrentUserId = (): string | null => {
+  const user = auth.currentUser;
+  return user ? user.uid : null;
+};
+
+/**
+ * Subscribe to authentication state changes
+ */
+export const onAuthStateChange = (
+  callback: (user: User | null) => void
+): (() => void) => {
+  return onAuthStateChanged(auth, callback);
 };
