@@ -152,7 +152,7 @@ export default function EditFieldModal({
           </View>
         );
 
-      case "slider":
+      case "slider": {
         const numericValue =
           typeof localValue === "string"
             ? parseFloat(localValue.replace(/[^0-9.]/g, "")) || min
@@ -210,6 +210,7 @@ export default function EditFieldModal({
             </View>
           </View>
         );
+      }
 
       case "selection":
       case "units":

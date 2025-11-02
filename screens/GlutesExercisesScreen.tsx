@@ -102,14 +102,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "black",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "white",
-    textAlign: "center",
-    marginTop: 20,
-    marginBottom: 20,
-  },
   listContainer: {
     paddingHorizontal: 16,
     paddingBottom: 20,

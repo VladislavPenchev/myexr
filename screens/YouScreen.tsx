@@ -319,29 +319,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#fff",
   },
-  followersText: {
-    fontSize: 14,
-    color: "#999",
-    fontWeight: "500",
-  },
-  socialTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
-  },
-  socialSubtitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  socialSubtitle: {
-    fontSize: 14,
-    color: "#999",
-  },
-  emoji: {
-    fontSize: 20,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
