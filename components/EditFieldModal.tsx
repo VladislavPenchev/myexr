@@ -11,7 +11,6 @@ import {
   Platform,
   Animated,
 } from "react-native";
-import Slider from "@react-native-community/slider";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -160,22 +159,55 @@ export default function EditFieldModal({
             : localValue;
         const displayValue = Math.round(numericValue);
 
+        const handleDecrease = () => {
+          const newValue = Math.max(min, displayValue - step);
+          setLocalValue(newValue);
+        };
+
+        const handleIncrease = () => {
+          const newValue = Math.min(max, displayValue + step);
+          setLocalValue(newValue);
+        };
+
         return (
           <View style={styles.sliderContainer}>
             <Text style={styles.sliderValue}>
               {displayValue} {unit}
             </Text>
-            <Slider
-              style={styles.slider}
-              value={numericValue}
-              onValueChange={setLocalValue}
-              minimumValue={min}
-              maximumValue={max}
-              step={step}
-              minimumTrackTintColor="#fff"
-              maximumTrackTintColor="#333"
-              thumbTintColor="#fff"
-            />
+            <View style={styles.sliderControls}>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={handleDecrease}
+                disabled={displayValue <= min}
+              >
+                <Ionicons
+                  name="remove-circle-outline"
+                  size={40}
+                  color={displayValue <= min ? "#666" : "#fff"}
+                />
+              </TouchableOpacity>
+              <View style={styles.sliderBar}>
+                <View
+                  style={[
+                    styles.sliderFill,
+                    {
+                      width: `${((displayValue - min) / (max - min)) * 100}%`,
+                    },
+                  ]}
+                />
+              </View>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={handleIncrease}
+                disabled={displayValue >= max}
+              >
+                <Ionicons
+                  name="add-circle-outline"
+                  size={40}
+                  color={displayValue >= max ? "#666" : "#fff"}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         );
 
@@ -334,9 +366,26 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: 32,
   },
-  slider: {
+  sliderControls: {
+    flexDirection: "row",
+    alignItems: "center",
     width: "100%",
-    height: 40,
+    gap: 16,
+  },
+  sliderButton: {
+    padding: 8,
+  },
+  sliderBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: "#333",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  sliderFill: {
+    height: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 2,
   },
   // Selection styles
   selectionContainer: {
