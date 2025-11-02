@@ -6,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { User } from "firebase/auth";
 
 import MyPlanScreen from "./screens/MyPlanScreen";
 import ProgramsScreen from "./screens/ProgramsScreen";
@@ -19,7 +18,6 @@ import JournalScreen from "./screens/JournalScreen";
 import AuthScreen from "./screens/AuthScreen";
 import { TouchableOpacity, Text } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { onAuthStateChange } from "./services/authService";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -111,29 +109,12 @@ function YouStack() {
 }
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user);
-      setLoading(false);
-    });
+  // For now, skip auth screen - always show main app
+  // If you want to show auth screen, set showAuth to true initially
 
-    return unsubscribe;
-  }, []);
-
-  if (loading) {
-    return (
-      <SafeAreaProvider>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-        </View>
-      </SafeAreaProvider>
-    );
-  }
-
-  if (!user) {
+  if (showAuth) {
     return (
       <SafeAreaProvider>
         <StatusBar style="light" />

@@ -13,8 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { signUp, signIn } from "../services/authService";
-import { saveUserProfile } from "../services/userService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AuthScreen() {
   const insets = useSafeAreaInsets();
@@ -36,45 +35,30 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      if (isLogin) {
-        await signIn(email.trim(), password);
-      } else {
-        const user = await signUp(email.trim(), password);
-        // Try to create user profile in Firestore, but don't fail registration if it fails
-        try {
-          await saveUserProfile(user.uid, {
-            account: email.trim(),
-            name: "",
-            gender: "",
-            age: "",
-            height: "",
-            weight: "",
-            units: "metric",
-            badges: [],
-          });
-        } catch (profileError: any) {
-          console.warn(
-            "Failed to create user profile in Firestore:",
-            profileError
-          );
-          // Registration succeeded, profile creation failed - user can still log in
-          // The profile will be created later when they access their profile
-        }
+      // Mock authentication - just save profile
+      if (!isLogin) {
+        // Create user profile in local storage
+        const profile = {
+          id: "mock-user-id",
+          account: email.trim(),
+          name: "",
+          gender: "",
+          age: "",
+          height: "",
+          weight: "",
+          units: "Metric",
+          badges: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await AsyncStorage.setItem("@user_profile", JSON.stringify(profile));
       }
+      // Success - navigation will be handled by App.tsx
     } catch (error: any) {
       let errorMessage = "Възникна грешка. Моля опитайте отново.";
 
-      if (error.message.includes("email-already-in-use")) {
-        errorMessage =
-          "Този имейл вече е регистриран. Моля влезте в профила си.";
-      } else if (error.message.includes("invalid-email")) {
-        errorMessage = "Невалиден имейл адрес.";
-      } else if (error.message.includes("user-not-found")) {
-        errorMessage = "Потребител с този имейл не съществува.";
-      } else if (error.message.includes("wrong-password")) {
-        errorMessage = "Грешна парола.";
-      } else if (error.message.includes("weak-password")) {
-        errorMessage = "Паролата е твърде слаба.";
+      if (error.message) {
+        errorMessage = error.message;
       }
 
       Alert.alert("Error", errorMessage);

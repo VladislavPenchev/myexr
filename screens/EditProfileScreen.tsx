@@ -12,19 +12,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import ProfileRow from "../components/ProfileRow";
 import EditFieldModal, { FieldType } from "../components/EditFieldModal";
-import {
-  getUserProfile,
-  saveUserProfile,
-  updateUserField,
-} from "../services/userService";
-import { getCurrentUserId } from "../services/authService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const [openField, setOpenField] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
   const [profileData, setProfileData] = useState({
     account: "vladislav.penchev@icloud....",
@@ -41,13 +35,10 @@ export default function EditProfileScreen() {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        const currentUserId = getCurrentUserId();
-        if (!currentUserId) return;
-        setUserId(currentUserId);
+        const data = await AsyncStorage.getItem("@user_profile");
 
-        const profile = await getUserProfile(currentUserId);
-
-        if (profile) {
+        if (data) {
+          const profile = JSON.parse(data);
           setProfileData({
             account: profile.account || "vladislav.penchev@icloud....",
             name: profile.name || "Vladislav",
@@ -57,19 +48,6 @@ export default function EditProfileScreen() {
             weight: profile.weight || "0.0 kg",
             units: profile.units || "Metric",
           });
-        } else {
-          // Create default profile if doesn't exist
-          if (userId) {
-            await saveUserProfile(currentUserId, {
-              account: profileData.account,
-              name: profileData.name,
-              gender: profileData.gender,
-              age: profileData.age,
-              height: profileData.height,
-              weight: profileData.weight,
-              units: profileData.units,
-            });
-          }
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -82,10 +60,21 @@ export default function EditProfileScreen() {
   }, []);
 
   const updateField = async (field: string, value: string | number) => {
-    if (!userId) return;
-
     try {
       setSaving(true);
+
+      // Determine field name and value format
+      let fieldName = field;
+      let fieldValue: string | number = value;
+
+      // Convert age and height to proper format
+      if (field === "age") {
+        fieldName = "age";
+        fieldValue = `${value} years`;
+      } else if (field === "height") {
+        fieldName = "height";
+        fieldValue = `${value} cm`;
+      }
 
       // Update local state
       setProfileData((prev) => {
@@ -112,20 +101,21 @@ export default function EditProfileScreen() {
         return updated;
       });
 
-      // Save to Firebase
-      let fieldName = field;
-      let fieldValue: string | number = value;
+      // Get existing profile and update
+      const existingData = await AsyncStorage.getItem("@user_profile");
+      const existing = existingData ? JSON.parse(existingData) : {};
 
-      // Convert age and height to proper format for Firebase
-      if (field === "age") {
-        fieldName = "age";
-        fieldValue = `${value} years`;
-      } else if (field === "height") {
-        fieldName = "height";
-        fieldValue = `${value} cm`;
-      }
+      // Get updated profile data from state (setProfileData updates asynchronously, so we calculate here)
+      const updatedProfile = { ...profileData };
+      updatedProfile[fieldName as keyof typeof updatedProfile] =
+        fieldValue as any;
 
-      await updateUserField(userId, fieldName, fieldValue);
+      const updated = {
+        ...existing,
+        ...updatedProfile,
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem("@user_profile", JSON.stringify(updated));
     } catch (error) {
       console.error("Error updating field:", error);
       // Optionally show error message to user

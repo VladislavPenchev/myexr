@@ -12,9 +12,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BadgesSection, { Badge } from "../components/profile/BadgesSection";
 import AllBadgesModal from "../components/profile/AllBadgesModal";
-import { getUserProfile } from "../services/userService";
-import { getCurrentUserId, signOutUser } from "../services/authService";
 import { Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function YouScreen() {
   const navigation = useNavigation();
@@ -56,16 +55,15 @@ export default function YouScreen() {
     },
   ]);
 
-  // Load user data from Firebase
+  // Load user data from local storage
   useEffect(() => {
     const loadUserData = async () => {
       try {
         setLoading(true);
-        const userId = getCurrentUserId();
-        if (!userId) return;
-        const profile = await getUserProfile(userId);
+        const data = await AsyncStorage.getItem("@user_profile");
+        if (data) {
+          const profile = JSON.parse(data);
 
-        if (profile) {
           // Update user name
           if (profile.name) {
             setUserName(profile.name);
@@ -80,48 +78,60 @@ export default function YouScreen() {
                 icon: "flame",
                 color: "#FF6B00",
                 unlocked:
-                  profile.badges.find((b) => b.name === "Calorie Starter")
-                    ?.unlocked || false,
+                  profile.badges.find(
+                    (b: { name: string; unlocked: boolean }) =>
+                      b.name === "Calorie Starter"
+                  )?.unlocked || false,
               },
               {
                 name: "Consistent 3",
                 icon: "radio-button-on",
                 color: "#4A90E2",
                 unlocked:
-                  profile.badges.find((b) => b.name === "Consistent 3")
-                    ?.unlocked || false,
+                  profile.badges.find(
+                    (b: { name: string; unlocked: boolean }) =>
+                      b.name === "Consistent 3"
+                  )?.unlocked || false,
               },
               {
                 name: "Calorie Week",
                 icon: "calendar",
                 color: "#9C27B0",
                 unlocked:
-                  profile.badges.find((b) => b.name === "Calorie Week")
-                    ?.unlocked || false,
+                  profile.badges.find(
+                    (b: { name: string; unlocked: boolean }) =>
+                      b.name === "Calorie Week"
+                  )?.unlocked || false,
               },
               {
                 name: "Calorie Crusher",
                 icon: "fitness",
                 color: "#F44336",
                 unlocked:
-                  profile.badges.find((b) => b.name === "Calorie Crusher")
-                    ?.unlocked || false,
+                  profile.badges.find(
+                    (b: { name: string; unlocked: boolean }) =>
+                      b.name === "Calorie Crusher"
+                  )?.unlocked || false,
               },
               {
                 name: "Smart Eater",
                 icon: "brain",
                 color: "#FF9800",
                 unlocked:
-                  profile.badges.find((b) => b.name === "Smart Eater")
-                    ?.unlocked || false,
+                  profile.badges.find(
+                    (b: { name: string; unlocked: boolean }) =>
+                      b.name === "Smart Eater"
+                  )?.unlocked || false,
               },
               {
                 name: "Nutrition King",
                 icon: "trophy",
                 color: "#FFD700",
                 unlocked:
-                  profile.badges.find((b) => b.name === "Nutrition King")
-                    ?.unlocked || false,
+                  profile.badges.find(
+                    (b: { name: string; unlocked: boolean }) =>
+                      b.name === "Nutrition King"
+                  )?.unlocked || false,
               },
             ];
             setBadges(profileBadges);
@@ -141,11 +151,12 @@ export default function YouScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", async () => {
       try {
-        const userId = getCurrentUserId();
-        if (!userId) return;
-        const profile = await getUserProfile(userId);
-        if (profile && profile.name) {
-          setUserName(profile.name);
+        const data = await AsyncStorage.getItem("@user_profile");
+        if (data) {
+          const profile = JSON.parse(data);
+          if (profile && profile.name) {
+            setUserName(profile.name);
+          }
         }
       } catch (error) {
         console.error("Error refreshing user data:", error);
@@ -166,7 +177,8 @@ export default function YouScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await signOutUser();
+            // Mock logout - no-op
+            console.log("User logged out");
           } catch (error) {
             console.error("Error signing out:", error);
             Alert.alert("Грешка", "Възникна грешка при излизане");
